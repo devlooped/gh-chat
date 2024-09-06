@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <ImplicitUsings>true</ImplicitUsings>
+    <RootNamespace>Devlooped</RootNamespace>
+  </PropertyGroup>
+</Project>
