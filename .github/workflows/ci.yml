@@ -1,0 +1,74 @@
+﻿name: ci/cd
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  release:
+    types: [released]
+
+env:
+  RestoreUseSkipNonexistentTargets: true
+  Configuration: Release
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🤘 checkout
+        uses: actions/checkout@v3
+
+      - name: 📦 publish
+        run: |
+          dotnet publish src/Extension/Extension.csproj -r win-x64 -o bin/win-x64 
+          dotnet publish src/Extension/Extension.csproj -r osx-x64 -o bin/osx-x64 
+          dotnet publish src/Extension/Extension.csproj -r osx-arm64 -o bin/osx-arm64 
+          dotnet publish src/Extension/Extension.csproj -r linux-x64 -o bin/linux-x64 
+
+      - name: ➡️ artifacts
+        run: |
+          mkdir -p ${{ runner.temp }}/staging
+          cp bin/win-x64/gh-sponsors.exe ${{ runner.temp }}/staging/sponsors-windows-amd64.exe
+          cp bin/osx-x64/gh-sponsors ${{ runner.temp }}/staging/sponsors-darwin-amd64
+          cp bin/osx-arm64/gh-sponsors ${{ runner.temp }}/staging/sponsors-darwin-arm64
+          cp bin/linux-x64/gh-sponsors ${{ runner.temp }}/staging/sponsors-linux-amd64
+
+      - name: ⬆️ upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: executables
+          path: ${{ runner.temp }}/staging/*
+
+  publish:
+    runs-on: windows-latest
+    continue-on-error: true
+    needs: build
+    if: github.event_name == 'release'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: 🤖 defaults
+        uses: devlooped/actions-bot@v1
+        with:
+          name: ${{ secrets.BOT_NAME }}
+          email: ${{ secrets.BOT_EMAIL }}
+          gh_token: ${{ secrets.GH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🤘 checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ env.GH_TOKEN }}
+
+      - name: ⬇️ artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: executables
+          path: ${{ runner.temp }}/dist
+
+      - name: 🚀 release
+        run: |
+            dotnet tool update -g dotnet-gcm
+            dotnet gcm store --protocol=https --host=github.com --username=$env:GITHUB_ACTOR --password=$env:GH_TOKEN
+            gci ${{ runner.temp }}/dist | %{ gh release upload ${{ github.event.release.tag_name }} $_.FullName }
