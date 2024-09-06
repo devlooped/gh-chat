@@ -28,10 +28,10 @@ jobs:
       - name: ➡️ artifacts
         run: |
           mkdir -p ${{ runner.temp }}/staging
-          cp bin/win-x64/gh-sponsors.exe ${{ runner.temp }}/staging/sponsors-windows-amd64.exe
-          cp bin/osx-x64/gh-sponsors ${{ runner.temp }}/staging/sponsors-darwin-amd64
-          cp bin/osx-arm64/gh-sponsors ${{ runner.temp }}/staging/sponsors-darwin-arm64
-          cp bin/linux-x64/gh-sponsors ${{ runner.temp }}/staging/sponsors-linux-amd64
+          cp bin/win-x64/gh-chat.exe ${{ runner.temp }}/staging/chat-windows-amd64.exe
+          cp bin/osx-x64/gh-chat ${{ runner.temp }}/staging/chat-darwin-amd64
+          cp bin/osx-arm64/gh-chat ${{ runner.temp }}/staging/chat-darwin-arm64
+          cp bin/linux-x64/gh-chat ${{ runner.temp }}/staging/chat-linux-amd64
 
       - name: ⬆️ upload
         uses: actions/upload-artifact@v3
